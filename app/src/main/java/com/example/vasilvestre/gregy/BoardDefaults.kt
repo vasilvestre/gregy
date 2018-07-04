@@ -2,6 +2,7 @@ package com.example.vasilvestre.gregy
 
 import android.os.Build
 
+@SuppressWarnings("WeakerAccess")
 object BoardDefaults {
     private const val DEVICE_RPI3 = "rpi3"
     private const val DEVICE_IMX6UL_PICO = "imx6ul_pico"
@@ -25,5 +26,12 @@ object BoardDefaults {
         DEVICE_IMX6UL_PICO -> "GPIO2_IO03"
         DEVICE_IMX7D_PICO -> "GPIO6_IO14"
         else -> throw IllegalStateException("Unknown Build.DEVICE " + Build.DEVICE)
+    }
+
+    val gpioForSpeaker = when (Build.DEVICE) {
+            DEVICE_RPI3 -> "PWM1"
+            DEVICE_IMX6UL_PICO -> "PWM8"
+            DEVICE_IMX7D_PICO -> "PWM2"
+        else -> throw UnsupportedOperationException("Unknown device: " + Build.DEVICE)
     }
 }

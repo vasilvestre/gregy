@@ -2,8 +2,8 @@ package com.example.vasilvestre.gregy
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.ProgressDialog
 import android.content.ContentResolver
+import android.content.ContentValues.TAG
 import android.graphics.*
 import android.media.Image
 import android.media.ImageReader
@@ -21,8 +21,14 @@ import com.microsoft.projectoxford.face.contract.*;
 import com.microsoft.projectoxford.face.FaceServiceRestClient
 import com.microsoft.projectoxford.face.FaceServiceClient
 import android.os.AsyncTask.execute
+import android.view.View
 import java.io.*
 import com.google.android.things.contrib.driver.pwmspeaker.Speaker
+import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.doAsyncResult
+import org.jetbrains.anko.makeCall
+import org.jetbrains.anko.uiThread
+import java.util.*
 
 class MainActivity : Activity() {
 
@@ -37,8 +43,6 @@ class MainActivity : Activity() {
     private val faceServiceClient = FaceServiceRestClient(
             "https://westcentralus.api.cognitive.microsoft.com/face/v1.0",
             "8d3742e0955b4d5fae10092d3a8ee064")
-
-    private lateinit var detectionProgressDialog: ProgressDialog
 
     private lateinit var mSpeaker: Speaker
 
@@ -55,7 +59,6 @@ class MainActivity : Activity() {
 
         mCamera = FaceCamera.instance
         mCamera.initializeCamera(this, mCameraHandler!!, mOnImageAvailableListener)
-        detectionProgressDialog = ProgressDialog(this)
     }
 
     private val mOnImageAvailableListener = OnImageAvailableListener { reader ->
@@ -67,7 +70,7 @@ class MainActivity : Activity() {
 
         val bitmapImage = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size, null)
         val output = FileOutputStream(File(Environment.getExternalStorageDirectory(), "/tmp.png"))
-        bitmapImage.compress(Bitmap.CompressFormat.JPEG, 95, output)
+        bitmapImage.compress(Bitmap.CompressFormat.JPEG, 100, output)
 
         image.close()
 
@@ -87,7 +90,7 @@ class MainActivity : Activity() {
                         val result = faceServiceClient.detect(
                                 params[0],
                                 true,
-                                false,
+                                true,
                                 null
                         )
                         if (result == null) {
@@ -106,21 +109,26 @@ class MainActivity : Activity() {
                 }
 
                 override fun onPreExecute() {
-                    detectionProgressDialog.show()
-                }
-
-                override fun onProgressUpdate(vararg progress: String) {
-                    Handler().post(Runnable{detectionProgressDialog.setMessage(progress[0]) })
+                    this@MainActivity.runOnUiThread(Runnable() {
+                        progressBar.visibility = View.VISIBLE
+                    })
                 }
 
                 override fun onPostExecute(result: Array<Face>) {
-                    detectionProgressDialog.dismiss()
-                    imageView3.setImageBitmap(drawFaceRectanglesOnBitmap(bitmapImage, result))
-                    bitmapImage.recycle()
+                    this@MainActivity.runOnUiThread(Runnable() {
+                        progressBar.visibility = View.GONE
+                        imageView3.setImageBitmap(drawFaceRectanglesOnBitmap(bitmapImage, result))
+                    })
                 }
             }
             detectTask.execute(inputStream)
         }
+    }
+
+    fun changename(name: String) {
+        this@MainActivity.runOnUiThread(Runnable() {
+            nameView.text = name
+        })
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
@@ -173,6 +181,8 @@ class MainActivity : Activity() {
         paint.color = Color.RED
         val stokeWidth = 2
         paint.strokeWidth = stokeWidth.toFloat()
+        var name: String = ""
+        val faceIds : ArrayList<UUID> = ArrayList()
         if (faces != null) {
             for (face in faces) {
                 val faceRectangle = face.faceRectangle
@@ -182,6 +192,27 @@ class MainActivity : Activity() {
                         (faceRectangle.left + faceRectangle.width).toFloat(),
                         (faceRectangle.top + faceRectangle.height).toFloat(),
                         paint)
+                faceIds.add(face.faceId)
+                doAsync {
+                    val results = faceServiceClient.identity("allowed",faceIds.toTypedArray(),10)
+                    name = faceServiceClient.getPerson("allowed",results[0].candidates[0].personId).name//todo faut choisir le meilleur canddat pas tous
+                    uiThread {
+                        val faceRectangle = face.faceRectangle
+                        canvas.drawRect(
+                                faceRectangle.left.toFloat(),
+                                faceRectangle.top.toFloat(),
+                                (faceRectangle.left + faceRectangle.width).toFloat(),
+                                (faceRectangle.top + faceRectangle.height).toFloat(),
+                                paint)
+                        canvas.drawText(
+                                name,
+                                (faceRectangle.left.toFloat()+(faceRectangle.left + faceRectangle.width).toFloat())/2,
+                                (faceRectangle.top.toFloat()+faceRectangle.top + faceRectangle.height) /2,
+                                paint)
+                        imageView3.setImageBitmap(bitmap)
+                        //bitmap.recycle()
+                    }
+                }
             }
         }
         return bitmap

@@ -9,7 +9,6 @@ import android.hardware.camera2.CameraManager
 import android.media.ImageReader
 import android.os.Handler
 import java.util.*
-import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.TotalCaptureResult
 import android.hardware.camera2.CaptureResult
@@ -17,8 +16,8 @@ import android.hardware.camera2.CaptureResult
 public class FaceCamera private constructor() {
     private val TAG = FaceCamera::class.java.simpleName
 
-    private val IMAGE_WIDTH = 333
-    private val IMAGE_HEIGHT = 333
+    private val IMAGE_WIDTH = 666
+    private val IMAGE_HEIGHT = 666
     private val MAX_IMAGES = 1
 
     private lateinit var mCameraDevice : CameraDevice

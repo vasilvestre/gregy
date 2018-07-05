@@ -34,10 +34,15 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     compileOnly 'com.google.android.things:androidthings:+'
-    implementation"org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
     implementation 'com.google.android.things.contrib:driver-button:1.0'
     implementation 'com.google.android.things.contrib:driver-pwmspeaker:1.0'
     implementation 'com.android.support:recyclerview-v7:27.1.1'
     implementation 'com.microsoft.projectoxford:face:1.4.3'
     implementation "org.jetbrains.anko:anko-commons:0.10.4"
+    implementation 'com.google.firebase:firebase-core:16.0.1'
+    implementation 'com.google.firebase:firebase-storage:16.0.1'
+    implementation 'com.google.firebase:firebase-auth:16.0.2'
 }
+
+apply plugin: 'com.google.gms.google-services'

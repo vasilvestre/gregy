@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "975140659713",
+    "firebase_url": "https://gregy-8ce47.firebaseio.com",
+    "project_id": "gregy-8ce47",
+    "storage_bucket": "gregy-8ce47.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:975140659713:android:f7dd04b06eb69f4c",
+        "android_client_info": {
+          "package_name": "com.example.vasilvestre.gregy"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "975140659713-jug82i9m5dchub7ipsm7ate9gp98nj7t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDq7MwWgJ9nePEDRfACaQAtwEW8p88xSek"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

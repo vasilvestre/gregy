@@ -24,6 +24,9 @@ import android.os.AsyncTask.execute
 import android.view.View
 import java.io.*
 import com.google.android.things.contrib.driver.pwmspeaker.Speaker
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.doAsyncResult
 import org.jetbrains.anko.makeCall
@@ -45,7 +48,9 @@ class MainActivity : Activity() {
             "https://westcentralus.api.cognitive.microsoft.com/face/v1.0",
             "8d3742e0955b4d5fae10092d3a8ee064")
 
-    private lateinit var mSpeaker: Speaker
+    private lateinit var mStorageReference: StorageReference
+
+    private lateinit var mAuth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,9 +58,13 @@ class MainActivity : Activity() {
 
         initGpio()
 
+        mAuth = FirebaseAuth.getInstance()
+        mAuth.signInAnonymously()
+        mStorageReference = FirebaseStorage.getInstance().reference
+
         mCameraThread = HandlerThread("CameraBackground")
         mCameraThread!!.start()
-        Log.i(TAG, "Mon thread est ouvert : " + mCameraThread!!.isAlive.toString())
+        //Log.i(TAG, "Mon thread est ouvert : " + mCameraThread!!.isAlive.toString())
         mCameraHandler = Handler(mCameraThread!!.looper)
 
         mCamera = FaceCamera.instance
@@ -81,7 +90,7 @@ class MainActivity : Activity() {
 
     private fun onPictureTaken(bitmapImage: Bitmap, imageBytes: ByteArray?) {
         if (imageBytes != null) {
-            val outputStream = ByteArrayOutputStream()
+            var bitmap: Bitmap
             val inputStream = ByteArrayInputStream(imageBytes)
             val detectTask = @SuppressLint("StaticFieldLeak")
             object : AsyncTask<InputStream, String, Array<Face>>() {
@@ -118,12 +127,21 @@ class MainActivity : Activity() {
                 override fun onPostExecute(result: Array<Face>) {
                     this@MainActivity.runOnUiThread(Runnable() {
                         progressBar.visibility = View.GONE
-                        imageView3.setImageBitmap(drawFaceRectanglesOnBitmap(bitmapImage, result))
+                        bitmap = drawFaceRectanglesOnBitmap(bitmapImage, result)
+                        imageView3.setImageBitmap(bitmap)
                     })
                 }
             }
             detectTask.execute(inputStream)
         }
+    }
+
+    private fun sendToFirebase(bitmap: Bitmap) {
+        val stream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG,100,stream)
+        val mStorageRef = mStorageReference.child("images/"+UUID.randomUUID())
+        mStorageRef.putBytes(stream.toByteArray())
+        bitmap.recycle()
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
@@ -207,108 +225,13 @@ class MainActivity : Activity() {
                                         (faceRectangle.top.toFloat() + faceRectangle.top + faceRectangle.height) / 2,
                                         paint)
                                 imageView3.setImageBitmap(bitmap)
-                                //bitmap.recycle()
                             }
                         }
                     }
                 }
+                sendToFirebase(bitmap)
             }
         }
         return bitmap
     }
-
-//    private fun drawFaceRectanglesOnBitmap(originalBitmap: Bitmap, faces: Array<Face>?): Bitmap {
-//        val bitmap = originalBitmap.copy(Bitmap.Config.ARGB_8888, true)
-//        val canvas = Canvas(bitmap)
-//        val paint = Paint()
-//        paint.isAntiAlias = true
-//        paint.style = Paint.Style.STROKE
-//        paint.color = Color.RED
-//        paint.textSize = 20F
-//        val stokeWidth = 2
-//        paint.strokeWidth = stokeWidth.toFloat()
-//        var name: String = ""
-//        if (faces != null) {
-//            val faceIds: ArrayList<UUID> = ArrayList()
-//            for (face in faces) {
-//                var name: String
-//                val faceRectangle = face.faceRectangle
-//                canvas.drawRect(
-//                        faceRectangle.left.toFloat(),
-//                        faceRectangle.top.toFloat(),
-//                        (faceRectangle.left + faceRectangle.width).toFloat(),
-//                        (faceRectangle.top + faceRectangle.height).toFloat(),
-//                        paint)
-//                faceIds.clear()
-//                faceIds.add(face.faceId)
-//                var results: Array<IdentifyResult>
-//                doAsync {
-//                    //results = faceServiceClient.identityInPersonGroup("allowed", faceIds.toTypedArray(), 0.4F, 5)
-//                    results = faceServiceClient.identityInPersonGroup("allowed", faceIds.toTypedArray(), 5)
-//                    if (results[0].candidates.size == 0) {
-//                        name = "inconnu"
-//                    } else {
-//                        name = faceServiceClient.getPerson("allowed", results[0].candidates[0].personId).name
-//                    }
-//                    uiThread {
-//                        canvas.drawText(
-//                                name,
-//                                (faceRectangle.left.toFloat() + (faceRectangle.left + faceRectangle.width).toFloat()) / 2,
-//                                (faceRectangle.top.toFloat() + faceRectangle.top + faceRectangle.height) / 2,
-//                                paint)
-//                        imageView3.setImageBitmap(bitmap)
-//                    }
-//                }
-//            }
-//        }
-//        return bitmap
-//    }
-
-//    private fun drawFaceRectanglesOnBitmap(originalBitmap: Bitmap, faces: Array<Face>?): Bitmap {
-//        val bitmap = originalBitmap.copy(Bitmap.Config.ARGB_8888, true)
-//        val canvas = Canvas(bitmap)
-//        val paint = Paint()
-//        paint.isAntiAlias = true
-//        paint.style = Paint.Style.STROKE
-//        paint.color = Color.RED
-//        paint.textSize = 20F
-//        val stokeWidth = 2
-//        paint.strokeWidth = stokeWidth.toFloat()
-//        var name: String = ""
-//        if (faces != null) {
-//            val faceIds: ArrayList<UUID> = ArrayList()
-//            for (face in faces) {
-//                var name: String
-//                val faceRectangle = face.faceRectangle
-//                canvas.drawRect(
-//                        faceRectangle.left.toFloat(),
-//                        faceRectangle.top.toFloat(),
-//                        (faceRectangle.left + faceRectangle.width).toFloat(),
-//                        (faceRectangle.top + faceRectangle.height).toFloat(),
-//                        paint)
-//                faceIds.clear()
-//                faceIds.add(face.faceId)
-//                var results: Array<IdentifyResult>
-//                doAsync {
-//                    results = faceServiceClient.identityInPersonGroup("allowed", faceIds.toTypedArray(), 0.4F, 5)
-//                    //results = faceServiceClient.identityInPersonGroup("allowed", faceIds.toTypedArray(), 5)
-//                    if (results[0].candidates.size == 0) {
-//                        name = "inconnu"
-//                    } else {
-//                        name = faceServiceClient.getPerson("allowed", results[0].candidates[0].personId).name
-//                    }
-//                    Log.e(TAG,results[0].candidates.size.toString())
-//                    uiThread {
-//                        canvas.drawText(
-//                                name,
-//                                (faceRectangle.left.toFloat() + (faceRectangle.left + faceRectangle.width).toFloat()) / 2,
-//                                (faceRectangle.top.toFloat() + faceRectangle.top + faceRectangle.height) / 2,
-//                                paint)
-//                        imageView3.setImageBitmap(bitmap)
-//                    }
-//                }
-//            }
-//        }
-//        return bitmap
-//    }
 }

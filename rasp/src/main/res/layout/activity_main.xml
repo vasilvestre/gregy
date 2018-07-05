@@ -19,8 +19,8 @@
 
     <ImageView
         android:id="@+id/imageView3"
-        android:layout_width="333dp"
-        android:layout_height="333dp"
+        android:layout_width="377dp"
+        android:layout_height="382dp"
         android:src="@android:color/background_light"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -40,15 +40,5 @@
         app:layout_constraintTop_toBottomOf="@+id/imageView3"
         tools:layout_editor_absoluteX="8dp"
         tools:visibility="invisible" />
-
-    <TextView
-        android:id="@+id/nameView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="TextView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:layout_editor_absoluteY="65dp" />
 
 </android.support.constraint.ConstraintLayout>
